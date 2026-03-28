@@ -1,95 +1,72 @@
-# Lab 1 — Lab Overview & Environment Setup
+# LAB: Install and Configure Hadoop (Single Node) on CentOS Stream (Modern Systems)
+
+---
+
+# Lab 1 — Objective and Constraints
 
 ## Objective
 
-Prepare the system and ensure it is ready for Hadoop installation.
+Set up a working Hadoop single-node cluster (HDFS + YARN) and verify functionality.
 
 ---
-
-## What you will do
-
-* Update system packages
-* Install required tools
-* Verify system readiness
-
 ---
 
-## Steps
+# Lab 2 — System Preparation
 
-### 1. Update system
+## Step 1: Update system
 
 ```bash
 sudo dnf update -y
 ```
 
 **Explanation:**
-Ensures all system packages are current and avoids dependency conflicts later.
+Ensures latest package metadata and avoids dependency issues.
 
 ---
 
-### 2. Install required utilities
+## Step 2: Install required tools
 
 ```bash
-sudo dnf install -y wget curl vim net-tools
+sudo dnf install -y wget curl vim net-tools openssh-server openssh-clients
 ```
 
 **Explanation:**
-These tools are required for downloading files, editing configs, and troubleshooting.
+Installs utilities, SSH (required for Hadoop), and networking tools.
 
 ---
 
-## Validation
-
-Run:
+## Step 3: Start SSH
 
 ```bash
-wget --version
-```
-
-**Expected:** Command should return version details.
-
----
-
-# Lab 2 — Install and Configure Java
-
-## Objective
-
-Install Java and configure environment variables required by Hadoop.
-
----
-
-## Steps
-
-### 1. Install Java
-
-```bash
-sudo dnf install -y java-25-openjdk-devel
+sudo systemctl enable sshd
+sudo systemctl start sshd
 ```
 
 **Explanation:**
-Hadoop depends on Java. Without it, Hadoop will not start.
+Hadoop uses SSH internally even in single-node mode.
 
 ---
 
-### 2. Verify Java
+# Lab 3 — Install Java 11 (Critical Fix)
+
+## Step 1: Download Java 11 manually
 
 ```bash
-java -version
+cd /opt
+sudo wget https://download.java.net/java/GA/jdk11/13/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
 ```
-
-**Expected:** OpenJDK 25 output.
 
 ---
 
-### 3. Configure JAVA_HOME
-
-Find path:
+## Step 2: Extract
 
 ```bash
-readlink -f $(which java)
+sudo tar -xzf openjdk-11.0.2_linux-x64_bin.tar.gz
 ```
 
-Set variable:
+---
+
+## Step 3: Set Java globally
 
 ```bash
 sudo vim /etc/profile.d/java.sh
@@ -98,8 +75,8 @@ sudo vim /etc/profile.d/java.sh
 Add:
 
 ```bash
-export JAVA_HOME=/usr/lib/jvm/java-25-openjdk
-export PATH=$PATH:$JAVA_HOME/bin
+export JAVA_HOME=/opt/jdk-11.0.2
+export PATH=$JAVA_HOME/bin:$PATH
 ```
 
 Apply:
@@ -108,139 +85,87 @@ Apply:
 source /etc/profile.d/java.sh
 ```
 
-**Explanation:**
-JAVA_HOME is required by Hadoop scripts to locate Java.
-
 ---
 
-## Validation
+## Step 4: Verify
 
 ```bash
-echo $JAVA_HOME
+java -version
+```
+
+**Expected:**
+
+```
+openjdk version "11.x"
 ```
 
 ---
 
-# Lab 3 — Create Hadoop User
-
-## Objective
-
-Create a dedicated user to run Hadoop services.
-
----
-
-## Steps
-
-### 1. Create user
+# Lab 4 — Create Hadoop User
 
 ```bash
 sudo useradd hadoop
 sudo passwd hadoop
-```
-
----
-
-### 2. Grant sudo access (optional)
-
-```bash
 sudo usermod -aG wheel hadoop
-```
-
----
-
-### 3. Switch user
-
-```bash
 su - hadoop
 ```
 
 **Explanation:**
-Running Hadoop as a separate user prevents permission issues and improves isolation.
+Dedicated user prevents permission issues and improves isolation.
 
 ---
 
-## Validation
+# Lab 5 — Fix SSH (Previously Failed Step)
 
-```bash
-whoami
-```
+## Step 1: Create SSH directory
 
-**Expected:** hadoop
-
----
-
-# Lab 4 — Configure SSH
-
-## Objective
-
-Enable passwordless SSH required by Hadoop.
-
----
-
-## Steps
-
-### 1. Install SSH
-
-```bash
-sudo dnf install -y openssh-server openssh-clients
-```
-
----
-
-### 2. Start SSH service
-
-```bash
-sudo systemctl enable sshd
-sudo systemctl start sshd
-```
-
----
-
-### 3. Configure passwordless SSH
-
-#### Manually create .ssh directory
 ```bash
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 ```
 
-#### Create a KEY
+---
+
+## Step 2: Generate key (DO NOT interrupt)
+
 ```bash
 ssh-keygen -t rsa -P ""
+```
+
+Press Enter when prompted.
+
+---
+
+## Step 3: Enable passwordless SSH
+
+```bash
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
-###### Just press Enter (do NOT type anything)
+
 ---
 
-### 4. Test SSH
+## Step 4: Fix ownership
+
+```bash
+chown -R hadoop:hadoop ~/.ssh
+```
+
+---
+
+## Step 5: Test
 
 ```bash
 ssh localhost
 ```
 
-**Explanation:**
-Hadoop internally uses SSH to start and manage services.
+**Expected:** No password prompt
 
 ---
 
-## Validation
+# Lab 6 — Install Hadoop
 
-Login should occur without password prompt.
-
----
-
-# Lab 5 — Download and Set Hadoop
-
-## Objective
-
-Download Hadoop and configure environment variables.
-
----
-
-## Steps
-
-### 1. Download Hadoop
+## Step 1: Download Hadoop
 
 ```bash
 wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
@@ -248,7 +173,7 @@ wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
 
 ---
 
-### 2. Extract Hadoop
+## Step 2: Extract
 
 ```bash
 tar -xzf hadoop-3.3.6.tar.gz
@@ -257,7 +182,7 @@ mv hadoop-3.3.6 hadoop
 
 ---
 
-### 3. Configure environment variables
+## Step 3: Set environment variables
 
 ```bash
 vim ~/.bashrc
@@ -276,12 +201,9 @@ Apply:
 source ~/.bashrc
 ```
 
-**Explanation:**
-This allows Hadoop commands to be executed globally.
-
 ---
 
-## Validation
+## Step 4: Verify
 
 ```bash
 hadoop version
@@ -289,17 +211,7 @@ hadoop version
 
 ---
 
-# Lab 6 — Configure Hadoop Core Files
-
-## Objective
-
-Configure Hadoop services (HDFS and YARN).
-
----
-
-## Steps
-
-Navigate:
+# Lab 7 — Configure Hadoop
 
 ```bash
 cd $HADOOP_HOME/etc/hadoop
@@ -307,7 +219,7 @@ cd $HADOOP_HOME/etc/hadoop
 
 ---
 
-### 1. Configure hadoop-env.sh
+## Step 1: hadoop-env.sh
 
 ```bash
 vim hadoop-env.sh
@@ -316,82 +228,110 @@ vim hadoop-env.sh
 Set:
 
 ```bash
-export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+export JAVA_HOME=/opt/jdk-11.0.2
 ```
 
 ---
 
-### 2. Configure core-site.xml
+## Step 2: core-site.xml
 
 ```bash
-vim core-site.xml
-```
-
-Add:
-
-```xml
+cat <<EOF > core-site.xml
 <configuration>
   <property>
     <name>fs.defaultFS</name>
     <value>hdfs://localhost:9000</value>
   </property>
 </configuration>
+EOF
 ```
 
 ---
 
-### 3. Configure hdfs-site.xml
+## Step 3: hdfs-site.xml
 
 ```bash
-vim hdfs-site.xml
-```
-
-Add:
-
-```xml
+cat <<EOF > hdfs-site.xml
 <configuration>
   <property>
     <name>dfs.replication</name>
     <value>1</value>
   </property>
+  <property>
+    <name>dfs.name.dir</name>
+    <value>file:///home/hadoop/hdfs/namenode</value>
+  </property>
+  <property>
+    <name>dfs.data.dir</name>
+    <value>file:///home/hadoop/hdfs/datanode</value>
+  </property>
 </configuration>
+EOF
+```
+
+Create directories:
+
+```bash
+mkdir -p ~/hdfs/namenode
+mkdir -p ~/hdfs/datanode
 ```
 
 ---
 
-**Explanation:**
-These files define how Hadoop storage and services operate.
+## Step 4: mapred-site.xml
+
+```bash
+cp mapred-site.xml.template mapred-site.xml
+```
+
+```bash
+cat <<EOF > mapred-site.xml
+<configuration>
+  <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+  </property>
+</configuration>
+EOF
+```
 
 ---
 
-## Validation
+## Step 5: yarn-site.xml
 
-No syntax errors in XML files.
+```bash
+cat <<EOF > yarn-site.xml
+<configuration>
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
+</configuration>
+EOF
+```
 
 ---
 
-# Lab 7 — Initialize and Start Hadoop
+# Lab 8 — Initialize Hadoop (Clean Start)
 
-## Objective
+## Step 1: Clean previous failed data
 
-Format HDFS and start Hadoop services.
+```bash
+rm -rf ~/hdfs/namenode/*
+rm -rf ~/hdfs/datanode/*
+```
 
 ---
 
-## Steps
-
-### 1. Format NameNode
+## Step 2: Format NameNode
 
 ```bash
 hdfs namenode -format
 ```
 
-**Explanation:**
-Initializes HDFS metadata. Must be done only once.
-
 ---
 
-### 2. Start services
+# Lab 9 — Start Hadoop
 
 ```bash
 start-dfs.sh
@@ -400,13 +340,15 @@ start-yarn.sh
 
 ---
 
-## Validation
+# Lab 10 — Validation
+
+## Step 1: Check processes
 
 ```bash
 jps
 ```
 
-**Expected processes:**
+Expected:
 
 * NameNode
 * DataNode
@@ -415,17 +357,7 @@ jps
 
 ---
 
-# Lab 8 — Test and Verify Hadoop
-
-## Objective
-
-Validate full Hadoop functionality.
-
----
-
-## Steps
-
-### 1. Test HDFS
+## Step 2: Test HDFS
 
 ```bash
 hdfs dfs -mkdir /test
@@ -434,7 +366,7 @@ hdfs dfs -ls /
 
 ---
 
-### 2. Run sample job
+## Step 3: Run sample job
 
 ```bash
 hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 5
@@ -442,27 +374,14 @@ hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar p
 
 ---
 
-### 3. Access Web UI
+## Step 4: Web UI
 
-* HDFS: [http://localhost:9870](http://localhost:9870)
-* YARN: [http://localhost:8088](http://localhost:8088)
-
----
-
-**Explanation:**
-These checks confirm storage, processing, and resource management are working.
+* HDFS → [http://localhost:9870](http://localhost:9870)
+* YARN → [http://localhost:8088](http://localhost:8088)
 
 ---
 
-# Lab 9 — Stop Services
-
-## Objective
-
-Safely stop Hadoop services.
-
----
-
-## Steps
+# Lab 11 — Stop Hadoop
 
 ```bash
 stop-yarn.sh
@@ -470,7 +389,3 @@ stop-dfs.sh
 ```
 
 ---
-
-## Explanation
-
-Stops all running Hadoop daemons and frees system resources.
