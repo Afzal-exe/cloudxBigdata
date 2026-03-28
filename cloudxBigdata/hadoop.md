@@ -63,7 +63,7 @@ Install Java and configure environment variables required by Hadoop.
 ### 1. Install Java
 
 ```bash
-sudo dnf install -y java-1.8.0-openjdk-devel
+sudo dnf install -y java-11-openjdk-devel
 ```
 
 **Explanation:**
