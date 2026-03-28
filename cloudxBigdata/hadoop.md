@@ -1,14 +1,26 @@
-# LAB: Install and Configure Hadoop (Single Node) on CentOS Stream (Modern Systems)
+# LAB: Install and Configure Hadoop (Single Node) on CentOS (Modern Systems)
 
 ---
 
-# Lab 1 — Objective and Constraints
+# Lab 1 — Objective
 
-## Objective
+## Goal
 
-Set up a working Hadoop single-node cluster (HDFS + YARN) and verify functionality.
+Set up a working Hadoop single-node cluster:
+
+* HDFS (storage)
+* YARN (resource management)
 
 ---
+
+## Critical Constraints
+
+* Hadoop 3.3.x **does NOT support Java 17+**
+* CentOS Stream **does NOT provide Java 8/11 via dnf reliably**
+* Therefore:
+
+> You MUST use manually installed Java 11
+
 ---
 
 # Lab 2 — System Preparation
@@ -20,7 +32,7 @@ sudo dnf update -y
 ```
 
 **Explanation:**
-Ensures latest package metadata and avoids dependency issues.
+Ensures system packages and metadata are up to date.
 
 ---
 
@@ -31,11 +43,11 @@ sudo dnf install -y wget curl vim net-tools openssh-server openssh-clients
 ```
 
 **Explanation:**
-Installs utilities, SSH (required for Hadoop), and networking tools.
+Provides tools for downloading, editing, networking, and SSH.
 
 ---
 
-## Step 3: Start SSH
+## Step 3: Enable SSH
 
 ```bash
 sudo systemctl enable sshd
@@ -43,17 +55,17 @@ sudo systemctl start sshd
 ```
 
 **Explanation:**
-Hadoop uses SSH internally even in single-node mode.
+Hadoop internally uses SSH to start services.
 
 ---
 
-# Lab 3 — Install Java 11 (Critical Fix)
+# Lab 3 — Install Java 11 (Stable Method)
 
-## Step 1: Download Java 11 manually
+## Step 1: Download (version-pinned, reliable)
 
 ```bash
 cd /opt
-sudo wget https://download.java.net/java/GA/jdk11/13/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
+sudo wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.24%2B8/OpenJDK11U-jdk_x64_linux_hotspot_11.0.24_8.tar.gz
 ```
 
 ---
@@ -61,12 +73,24 @@ sudo wget https://download.java.net/java/GA/jdk11/13/GPL/openjdk-11.0.2_linux-x6
 ## Step 2: Extract
 
 ```bash
-sudo tar -xzf openjdk-11.0.2_linux-x64_bin.tar.gz
+sudo tar -xzf OpenJDK11U-jdk_x64_linux_hotspot_11.0.24_8.tar.gz
+```
+
+Verify:
+
+```bash
+ls /opt
+```
+
+Expected:
+
+```text
+jdk-11.0.24+8
 ```
 
 ---
 
-## Step 3: Set Java globally
+## Step 3: Configure Java globally
 
 ```bash
 sudo vim /etc/profile.d/java.sh
@@ -75,7 +99,7 @@ sudo vim /etc/profile.d/java.sh
 Add:
 
 ```bash
-export JAVA_HOME=/opt/jdk-11.0.2
+export JAVA_HOME=/opt/jdk-11.0.24+8
 export PATH=$JAVA_HOME/bin:$PATH
 ```
 
@@ -87,16 +111,16 @@ source /etc/profile.d/java.sh
 
 ---
 
-## Step 4: Verify
+## Step 4: Verify Java
 
 ```bash
 java -version
 ```
 
-**Expected:**
+Expected:
 
-```
-openjdk version "11.x"
+```text
+openjdk version "11.0.24"
 ```
 
 ---
@@ -111,11 +135,11 @@ su - hadoop
 ```
 
 **Explanation:**
-Dedicated user prevents permission issues and improves isolation.
+Runs Hadoop in isolation to avoid permission issues.
 
 ---
 
-# Lab 5 — Fix SSH (Previously Failed Step)
+# Lab 5 — Configure SSH (Fixed Version)
 
 ## Step 1: Create SSH directory
 
@@ -126,13 +150,13 @@ chmod 700 ~/.ssh
 
 ---
 
-## Step 2: Generate key (DO NOT interrupt)
+## Step 2: Generate key (do not interrupt)
 
 ```bash
 ssh-keygen -t rsa -P ""
 ```
 
-Press Enter when prompted.
+Press Enter for default location.
 
 ---
 
@@ -159,7 +183,9 @@ chown -R hadoop:hadoop ~/.ssh
 ssh localhost
 ```
 
-**Expected:** No password prompt
+Expected:
+
+* No password prompt
 
 ---
 
@@ -219,7 +245,7 @@ cd $HADOOP_HOME/etc/hadoop
 
 ---
 
-## Step 1: hadoop-env.sh
+## Step 1: Set Java in Hadoop
 
 ```bash
 vim hadoop-env.sh
@@ -228,7 +254,7 @@ vim hadoop-env.sh
 Set:
 
 ```bash
-export JAVA_HOME=/opt/jdk-11.0.2
+export JAVA_HOME=/opt/jdk-11.0.24+8
 ```
 
 ---
@@ -282,9 +308,7 @@ mkdir -p ~/hdfs/datanode
 
 ```bash
 cp mapred-site.xml.template mapred-site.xml
-```
 
-```bash
 cat <<EOF > mapred-site.xml
 <configuration>
   <property>
@@ -312,9 +336,9 @@ EOF
 
 ---
 
-# Lab 8 — Initialize Hadoop (Clean Start)
+# Lab 8 — Initialize Hadoop
 
-## Step 1: Clean previous failed data
+## Step 1: Clean old state
 
 ```bash
 rm -rf ~/hdfs/namenode/*
@@ -376,8 +400,8 @@ hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar p
 
 ## Step 4: Web UI
 
-* HDFS → [http://localhost:9870](http://localhost:9870)
-* YARN → [http://localhost:8088](http://localhost:8088)
+* [http://localhost:9870](http://localhost:9870)
+* [http://localhost:8088](http://localhost:8088)
 
 ---
 
@@ -386,6 +410,43 @@ hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar p
 ```bash
 stop-yarn.sh
 stop-dfs.sh
+```
+
+---
+
+# Final Notes (Based on All Your Errors)
+
+## 1. Java is the single most critical dependency
+
+* Wrong version → Hadoop fails completely
+
+---
+
+## 2. Do NOT rely on:
+
+* `dnf install java-1.8...`
+* Random Oracle/OpenJDK links
+
+They are inconsistent across systems.
+
+---
+
+## 3. Always use:
+
+* Version-pinned Java 11 (manual install)
+
+---
+
+## 4. SSH must be correct
+
+* Missing `.ssh` → silent Hadoop failure
+
+---
+
+## 5. Always clean before retry
+
+```bash
+rm -rf ~/hdfs/*
 ```
 
 ---
