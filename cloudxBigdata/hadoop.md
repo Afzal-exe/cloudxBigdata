@@ -63,7 +63,7 @@ Install Java and configure environment variables required by Hadoop.
 ### 1. Install Java
 
 ```bash
-sudo dnf install -y java-11-openjdk-devel
+sudo dnf install -y java-25-openjdk-devel
 ```
 
 **Explanation:**
@@ -77,7 +77,7 @@ Hadoop depends on Java. Without it, Hadoop will not start.
 java -version
 ```
 
-**Expected:** OpenJDK 1.8 output.
+**Expected:** OpenJDK 25 output.
 
 ---
 
@@ -98,7 +98,7 @@ sudo vim /etc/profile.d/java.sh
 Add:
 
 ```bash
-export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+export JAVA_HOME=/usr/lib/jvm/java-25-openjdk
 export PATH=$PATH:$JAVA_HOME/bin
 ```
 
@@ -198,12 +198,19 @@ sudo systemctl start sshd
 
 ### 3. Configure passwordless SSH
 
+#### Manually create .ssh directory
+```bash
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
+#### Create a KEY
 ```bash
 ssh-keygen -t rsa -P ""
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
-
+###### Just press Enter (do NOT type anything)
 ---
 
 ### 4. Test SSH
