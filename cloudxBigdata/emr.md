@@ -2,7 +2,7 @@
 
 ---
 
-# Page 1 — Objective
+# Lab 1 — Objective
 
 ## Goal
 
@@ -22,7 +22,7 @@
 
 ---
 
-# Page 2 — Architecture Overview
+# Lab 2 — Architecture Overview
 
 ## Components used
 
@@ -41,7 +41,7 @@
 
 ---
 
-# Page 3 — Prerequisites
+# Lab 3 — Prerequisites
 
 ## Required
 
@@ -65,7 +65,7 @@ S3 acts as persistent storage. EMR clusters are temporary.
 
 ---
 
-# Page 4 — Prepare Input Data
+# Lab 4 — Prepare Input Data
 
 ## Create sample file locally
 
@@ -98,7 +98,7 @@ EMR does not rely on local disk for input; it uses S3.
 
 ---
 
-# Page 5 — Create EMR Cluster
+# Lab 5 — Create EMR Cluster
 
 ## Navigate to EMR Console
 
@@ -146,7 +146,7 @@ EMR provisions EC2 instances and installs Hadoop automatically.
 
 ---
 
-# Page 6 — Add Step (Run WordCount)
+# Lab 6 — Add Step (Run WordCount)
 
 ## Add a Step
 
@@ -184,7 +184,7 @@ hadoop-mapreduce-examples.jar wordcount s3://emr-lab-yourname/input s3://emr-lab
 
 ---
 
-# Page 7 — Monitor Job
+# Lab 7 — Monitor Job
 
 ## EMR Console
 
@@ -204,7 +204,7 @@ Common reasons:
 
 ---
 
-# Page 8 — View Output
+# Lab 8 — View Output
 
 Go to S3:
 
@@ -235,7 +235,7 @@ This is the result of MapReduce processing.
 
 ---
 
-# Page 9 — Clean Up (Critical)
+# Lab 9 — Clean Up (Critical)
 
 ## Terminate cluster
 
